@@ -1,0 +1,3 @@
+#define Assignment_VERSION_MAJOR @assignment_3_VERSION_MAJOR@
+#define Assignment_VERSION_MINOR @assignment_3_VERSION_MINOR@
+#define Assignment_PROJECT_NAME "assignment_@SPM_ASSIGNMENT@"
