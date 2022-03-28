@@ -31,13 +31,11 @@ void par_odd_even_sort(std::vector<int>& v, uint16_t nw) noexcept {
     using range = std::pair<std::size_t, std::size_t>;
 
     std::barrier b_one(nw);
-    std::barrier b_two(nw);
 
     std::vector<std::thread> threads;
     std::vector<range> ranges;
     threads.resize(nw);
     ranges.resize(nw);
-
 
     // For now, let's suppose that the array size is even...
     auto n = v.size();
@@ -58,31 +56,32 @@ void par_odd_even_sort(std::vector<int>& v, uint16_t nw) noexcept {
                     sorted = false;
                 }
             }
-
+            // Wait for all the threads finishing sorting their partitions (odd)
             b_one.arrive_and_wait();
 
-            // Odd phase
+            // Even phase
             for (std::size_t i = r.first - 1; i < r.second; i += 2) {
                 if (v[i] > v[i + 1]) {
                     spm::swap(v[i], v[i + 1]);
                     sorted = false;
                 }
             }
-            b_two.arrive_and_wait();
+            // Wait for all the threads finishing sorting their partitions (even)
+            b_one.arrive_and_wait();
         }
 
+        // Thread partion is sorted, the thread can drop the barriers
         b_one.arrive_and_drop();
-        b_two.arrive_and_drop();
     };
 
     for (std::size_t i = 0; i < nw; i++) {
-        ranges[i] = range(i * delta, (i != nw - 1) ? (i + 1) * delta : n);
+        ranges[i] = range((i * delta) + 1, (i != nw - 1) ? (i + 1) * delta : n);
         threads[i] = std::thread(phases, ranges[i]);
     }
 
-    for (auto& t : threads) {
-        t.join();
-    }
+    for (auto& t : threads) t.join();
+
+    seq_odd_even_sort(v); // Final pass in order to sort the partions
 
     return;
 }
@@ -135,9 +134,8 @@ int main(int argc, char** argv) {
     }
 
     {
-        spm::utimer t{"Sorting a vector using seq_odd_event_sort", &par_time};
+        spm::utimer t{"Sorting a vector using par_odd_event_sort", &par_time};
         par_odd_even_sort(v2, static_cast<uint16_t>(nw));
-        spm::print_vector(v2);
     }
 
     std::fprintf(stdout, "Total speedup: %.2f\n", spm::speedup(static_cast<double>(seq_time), static_cast<double>(par_time)));
