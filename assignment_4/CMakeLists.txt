@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.20)    # CMake version check
-project(assignment_3
+project(assignment
     VERSION 0.1
-    DESCRIPTION "Third assignment of SPM course (2021/2022)"
-)                                        # Create project "assignment_3"
+    DESCRIPTION "Fourth assignment of SPM course (2021/2022)"
+)                                        # Create project "assignment"
 
 option(DEBUG "Enable/disable debug" ON)
 
-set(SPM_ASSIGNMENT 3) # Number of the current assignment
-set(CMAKE_CXX_STANDARD 20)              # Enable C++20 standard
+set(SPM_ASSIGNMENT 4)       # Number of the current assignment
+set(CMAKE_CXX_STANDARD 20)  # Enable C++20 standard
 
 # set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*;") # Enable clang-tidy
 
@@ -23,9 +23,10 @@ else()
 endif()
 
 # Add executable target with source files listed in SOURCE_FILES variable
-add_executable(assignment_3 ${SOURCE_FILES})
+add_executable(assignment ${SOURCE_FILES})
 
-target_include_directories(assignment_3 PUBLIC 
+target_include_directories(assignment PUBLIC 
     ${CMAKE_CURRENT_BINARY_DIR}
-    include/
-    library/argparse/include)
+    ./include/
+    ../common/include/
+    ../common/library/argparse/include)

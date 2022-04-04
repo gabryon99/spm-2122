@@ -26,23 +26,24 @@ void seq_odd_even_sort(std::vector<int>& v) noexcept {
     }
 }
 
-void par_odd_even_sort(std::vector<int>& v, uint16_t nw) noexcept {
+template <spm::Ord T>
+void par_odd_even_sort(std::vector<T>& v, uint16_t nw) noexcept {
     
+    using thread = std::thread;
     using range = std::pair<std::size_t, std::size_t>;
 
-    std::barrier b_one(nw);
+    std::barrier sync_point(nw);
 
-    std::vector<std::thread> threads;
+    std::vector<thread> threads;
     std::vector<range> ranges;
-    threads.resize(nw);
-    ranges.resize(nw);
+    threads.resize(nw); ranges.resize(nw);
 
     // For now, let's suppose that the array size is even...
     auto n = v.size();
     auto delta = n / nw;
 
     auto phases = [&](const range& r) {
-        
+    
         bool sorted = false;
 
         while (!sorted) {
@@ -50,38 +51,36 @@ void par_odd_even_sort(std::vector<int>& v, uint16_t nw) noexcept {
             sorted = true;
 
             // Odd phase
-            for (std::size_t i = r.first; i < r.second; i += 2) {
+            for (std::size_t i = r.first + 1; i < r.second; i += 2) {
                 if (v[i] > v[i + 1]) {
                     spm::swap(v[i], v[i + 1]);
                     sorted = false;
                 }
             }
             // Wait for all the threads finishing sorting their partitions (odd)
-            b_one.arrive_and_wait();
+            sync_point.arrive_and_wait();
 
             // Even phase
-            for (std::size_t i = r.first - 1; i < r.second; i += 2) {
+            for (std::size_t i = r.first; i < r.second; i += 2) {
                 if (v[i] > v[i + 1]) {
                     spm::swap(v[i], v[i + 1]);
                     sorted = false;
                 }
             }
             // Wait for all the threads finishing sorting their partitions (even)
-            b_one.arrive_and_wait();
+            sync_point.arrive_and_wait();
         }
 
         // Thread partion is sorted, the thread can drop the barriers
-        b_one.arrive_and_drop();
+        sync_point.arrive_and_drop();
     };
 
     for (std::size_t i = 0; i < nw; i++) {
-        ranges[i] = range((i * delta) + 1, (i != nw - 1) ? (i + 1) * delta : n);
-        threads[i] = std::thread(phases, ranges[i]);
+        ranges[i] = range((i * delta), (i != nw - 1) ? (i + 1) * delta : n);
+        threads[i] = thread(phases, ranges[i]);
     }
 
     for (auto& t : threads) t.join();
-
-    seq_odd_even_sort(v); // Final pass in order to sort the partions
 
     return;
 }
@@ -139,6 +138,8 @@ int main(int argc, char** argv) {
     }
 
     std::fprintf(stdout, "Total speedup: %.2f\n", spm::speedup(static_cast<double>(seq_time), static_cast<double>(par_time)));
+    std::cout << "Is v1 sorted? " << (std::is_sorted(v1.begin(), v1.end()) ? "Yes" : "No") << "\n";
+    std::cout << "Is v2 sorted? " << (std::is_sorted(v2.begin(), v2.end()) ? "Yes" : "No") << "\n";
 
     return EXIT_SUCCESS;
 }

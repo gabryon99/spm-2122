@@ -13,16 +13,10 @@
 #include <concepts>
 #include <algorithm>
 #include <functional>
+#include <condition_variable>
+#include <mutex>
 
 namespace spm {
-
-    struct stats {
-        // how many tests have been performed
-        int iterations = 0; 
-        double min = 0;
-        double max = 0;
-        double average = 0;
-    };
 
     template <typename T>
     concept Eq = requires(T a, T b) {
@@ -97,13 +91,6 @@ namespace spm {
     double speedup(double seq_time, double par_time) {
         return seq_time / par_time;
     }
-
-    template <typename Fun, typename ...Args>
-    stats test_suite(int iterations, Fun&& f, Args&& ...args) {
-        // min, max, average
-        return {};
-    }
-
 }
 
 #endif
