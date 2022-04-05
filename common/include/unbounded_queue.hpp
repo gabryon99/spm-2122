@@ -15,7 +15,7 @@ namespace spm {
     public:
         void enqueue(const T&& e) noexcept {
             std::lock_guard<std::mutex> lock(queue_lock);
-            // Insert the 
+            // Insert the element in the queue
             queue.push(std::move(e));
             cv.notify_all();
         }
