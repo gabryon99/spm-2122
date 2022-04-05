@@ -8,6 +8,36 @@
 
 namespace spm {
 
+    template <typename Out>
+    class future {
+        
+        std::optional<Out> value{};
+        std::mutex future_lock;
+        std::condition_variable future_cv;
+
+    public:
+
+        void put(Out val) {
+            std::lock_guard<std::mutex> lock(future_lock);
+            this->value = std::optional{val};
+            future_cv.notify_all();
+        }
+
+        Out& get() {
+
+            std::unique_lock<std::mutex> lock(future_lock);
+
+            if (value.has_value()) {
+                return *this->value;
+            }
+
+            // Wait until the queue is not empty
+            future_cv.wait(lock, [&]() { return this->value.has_value(); });
+
+            return *this->value;
+        }
+    };
+
     class threadpool {
 
     using uint = unsigned int;
@@ -26,7 +56,7 @@ namespace spm {
         uint nw = thread::hardware_concurrency();
 
         vector<thread> threads;
-        uqueue<task > tasks;
+        uqueue<task> tasks;
 
         void initialize() {
             // Initialize the threads
@@ -58,7 +88,28 @@ namespace spm {
         }
 
         template <typename Out, typename... In>
-        void submit(Out&& fun, In&&... args) noexcept {
+        auto submit(Out&& fun, In&&... args) {
+
+            // https://floating.io/2017/07/lambda-shared_ptr-memory-leak/
+            using ReturnType = decltype(fun(args...));
+
+            auto future = std::make_shared<spm::future<ReturnType> >();
+            std::weak_ptr<spm::future<ReturnType> > weak_ref(future);
+
+            auto task_wrapper = [weak_ref, fun, args...]() {
+                auto f = weak_ref.lock();
+                if (f) {
+                    f->put(fun(args...));
+                }
+            };
+
+            tasks.enqueue(task{task_wrapper});
+
+            return future;
+        }
+
+        template <typename Out, typename... In>
+        void execute(Out&& fun, In&&... args) noexcept {
             auto bind = std::bind(fun, std::forward<In>(args)...);
             tasks.enqueue(task{bind});
         }
