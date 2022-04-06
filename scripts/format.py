@@ -4,6 +4,11 @@ import sys
 import argparse
 import subprocess
 
+CUSTOM_STYLES = {
+    "llvm-gabryon": "{BasedOnStyle: llvm, IndentWidth: 4}",
+    "google-gabryon": "{BasedOnStyle: google, IndentWidth: 4}"
+}
+
 def run_formatter(start, extensions = [".cpp", ".hpp", ".h"], style = "google"):
 
     to_visit = [start]
@@ -11,6 +16,7 @@ def run_formatter(start, extensions = [".cpp", ".hpp", ".h"], style = "google"):
 
     print(f"ℹ️ Info: running clang-format --style={style} on '*{'|*'.join(extensions)}' files...")
 
+    # Find the files to format inside the directories
     while len(to_visit) > 0:
         path = to_visit.pop()
         for filename in os.listdir(path):
@@ -21,6 +27,10 @@ def run_formatter(start, extensions = [".cpp", ".hpp", ".h"], style = "google"):
             elif os.path.isdir(filename):
                 to_visit.append(filename)
     
+    if style in CUSTOM_STYLES:
+        style = CUSTOM_STYLES[style]
+
+    # Format each file found
     for filename in to_format:
         print(f"🔄 Formatting: {filename}...")
         subprocess.run(["clang-format", "--style", style, "-i", filename])
