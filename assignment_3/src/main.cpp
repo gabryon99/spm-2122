@@ -1,9 +1,9 @@
-#include <spmutility.hpp>
 #include <assignmentconfig.h>
+
 #include <argparse/argparse.hpp>
+#include <spmutility.hpp>
 
 void seq_odd_even_sort(std::vector<int>& v) noexcept {
-    
     auto n = v.size();
     bool sorted = false;
 
@@ -28,7 +28,6 @@ void seq_odd_even_sort(std::vector<int>& v) noexcept {
 
 template <spm::Ord T>
 void par_odd_even_sort(std::vector<T>& v, uint16_t nw) noexcept {
-    
     using thread = std::thread;
     using range = std::pair<std::size_t, std::size_t>;
 
@@ -36,18 +35,17 @@ void par_odd_even_sort(std::vector<T>& v, uint16_t nw) noexcept {
 
     std::vector<thread> threads;
     std::vector<range> ranges;
-    threads.resize(nw); ranges.resize(nw);
+    threads.resize(nw);
+    ranges.resize(nw);
 
     // For now, let's suppose that the array size is even...
     auto n = v.size();
     auto delta = n / nw;
 
     auto phases = [&](const range& r) {
-    
         bool sorted = false;
 
         while (!sorted) {
-
             sorted = true;
 
             // Odd phase
@@ -67,7 +65,8 @@ void par_odd_even_sort(std::vector<T>& v, uint16_t nw) noexcept {
                     sorted = false;
                 }
             }
-            // Wait for all the threads finishing sorting their partitions (even)
+            // Wait for all the threads finishing sorting their partitions
+            // (even)
             sync_point.arrive_and_wait();
         }
 
@@ -86,7 +85,6 @@ void par_odd_even_sort(std::vector<T>& v, uint16_t nw) noexcept {
 }
 
 int main(int argc, char** argv) {
-
     constexpr auto DEFAULT_VECTOR_SIZE = 8;
     constexpr auto DEFAULT_PARALLEL_DEGREE = 4;
 
@@ -104,9 +102,9 @@ int main(int argc, char** argv) {
 
     try {
         program.parse_args(argc, argv);
-    }
-    catch (const std::runtime_error& err) {
-        std::fprintf(stderr, "Got an exception during parsing: %s\n", err.what());
+    } catch (const std::runtime_error& err) {
+        std::fprintf(stderr, "Got an exception during parsing: %s\n",
+                     err.what());
         return EXIT_FAILURE;
     }
 
@@ -137,9 +135,13 @@ int main(int argc, char** argv) {
         par_odd_even_sort(v2, static_cast<uint16_t>(nw));
     }
 
-    std::fprintf(stdout, "Total speedup: %.2f\n", spm::speedup(static_cast<double>(seq_time), static_cast<double>(par_time)));
-    std::cout << "Is v1 sorted? " << (std::is_sorted(v1.begin(), v1.end()) ? "Yes" : "No") << "\n";
-    std::cout << "Is v2 sorted? " << (std::is_sorted(v2.begin(), v2.end()) ? "Yes" : "No") << "\n";
+    std::fprintf(stdout, "Total speedup: %.2f\n",
+                 spm::speedup(static_cast<double>(seq_time),
+                              static_cast<double>(par_time)));
+    std::cout << "Is v1 sorted? "
+              << (std::is_sorted(v1.begin(), v1.end()) ? "Yes" : "No") << "\n";
+    std::cout << "Is v2 sorted? "
+              << (std::is_sorted(v2.begin(), v2.end()) ? "Yes" : "No") << "\n";
 
     return EXIT_SUCCESS;
 }
