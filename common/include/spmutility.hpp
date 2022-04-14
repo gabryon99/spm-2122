@@ -16,6 +16,10 @@
 #include <utility>
 #include <vector>
 
+#ifdef __APPLE__
+    #include <sys/sysctl.h>
+#endif
+
 namespace spm {
 
 template <typename T>
@@ -65,6 +69,10 @@ class utimer {
                   << std::endl;
         if (us_elapsed != nullptr) (*us_elapsed) = musec;
     }
+
+    static double to_seconds(long musec) {
+        return static_cast<double>(musec) / 1000.0;
+    }
 };
 
 template <typename T>
@@ -89,6 +97,20 @@ std::vector<int> gen_random_int_vector(std::size_t size, int min = 0,
 }
 
 double speedup(double seq_time, double par_time) { return seq_time / par_time; }
+
+#ifdef __APPLE__
+std::size_t get_cache_line_size() {
+    size_t line_size = 0;
+    size_t sizeof_line_size = sizeof(line_size);
+    sysctlbyname("hw.cachelinesize", &line_size, &sizeof_line_size, 0, 0);
+    return line_size;
+}
+#else
+std::size_t get_cache_line_size() {
+    return 0;
+}
+#endif
+
 }  // namespace spm
 
 #endif

@@ -89,8 +89,7 @@ class threadpool {
         std::weak_ptr<spm::future<ReturnType>> weak_ref(future);
 
         auto task_wrapper = [weak_ref, fun, args...]() {
-            auto f = weak_ref.lock();
-            if (f) {
+            if (auto f = weak_ref.lock()) {
                 f->put(fun(args...));
             }
         };
