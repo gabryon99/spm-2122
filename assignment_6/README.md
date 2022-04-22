@@ -1,0 +1,3 @@
+## Assignment 6 (April 13):
+
+Write a parallel program that finds all prime numbers in a given range of values, passed as parameters of the command line. In order to check if a number is prime, please use the following code: primality test WikiPedia. Consider your favorite parallel programming framework among the ones we've seen so far (C++ native threads, OpenMP, GrPPI) and possibly implement more that one version (e.g. a native C++ and an OpenMP version) comparing the relative performances.
