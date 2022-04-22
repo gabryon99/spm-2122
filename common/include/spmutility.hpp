@@ -98,6 +98,20 @@ std::vector<int> gen_random_int_vector(std::size_t size, int min = 0,
 
 double speedup(double seq_time, double par_time) { return seq_time / par_time; }
 
+void active_delay(const std::chrono::nanoseconds& nsecs) {
+
+  // read current time
+  auto start = std::chrono::high_resolution_clock::now();
+  bool end = false;
+
+  while (!end) {
+    auto elapsed = std::chrono::high_resolution_clock::now() - start;
+    if (elapsed > nsecs) {
+        end = true;
+    }
+  }
+}
+
 #ifdef __APPLE__
 std::size_t get_cache_line_size() {
     size_t line_size = 0;
