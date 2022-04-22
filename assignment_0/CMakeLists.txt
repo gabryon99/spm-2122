@@ -27,5 +27,6 @@ add_executable(assignment ${SOURCE_FILES})
 
 target_include_directories(assignment PUBLIC 
     ${CMAKE_CURRENT_BINARY_DIR}
-    include/
-    library/argparse/include)
+    ./include/
+    ../common/include/
+    ../common/library/argparse/include)
